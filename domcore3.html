@@ -1,0 +1,710 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<HTML>
+<HEAD>
+
+<META charset="windows-1250">
+<TITLE>Generátor tabulek</TITLE>
+<LINK rel='stylesheet' href='DOMcore_styles.css'>
+
+<SCRIPT type='text/javascript'>
+
+var a = 0;
+var b = 0;
+var puvodni = "";
+var barva = 0;
+var tab = 0;
+var ajdy = "";
+var pomocna = "";
+var puvodniId = "";
+var puvodniId_barva = "";
+var koeficientPoctuRozdeleni = 1;
+var koeficientPoctuRozdeleni2 = 1;
+
+
+//------------------------------------------GENEROVÁNÍ TABULKY-------------------------------------
+function generuj() {
+
+barva = 0;
+tab++;
+
+var tiskBut = document.getElementById("tisk");
+tiskBut.style.visibility = "visible";
+
+var table = document.createElement("table");
+table.style.border = "2px solid #4f4f4f";
+table.setAttribute("class", "tabulka");
+table.style.margin = 20;
+table.setAttribute("id", tab);
+var telo = document.getElementById("telo");
+telo.appendChild(table);
+
+a = document.getElementById("cols").value;
+b = document.getElementById("rows").value;
+
+var hlavicka = document.getElementById("hlavicka");
+var legenda = document.getElementById("legenda");
+
+if(hlavicka.checked)  {
+a = Number(a)+ 1;
+}
+
+if(legenda.checked)  {
+b = Number(b) + 1;
+}
+
+for (i = 0; i < a; i++) {
+	var tr = document.createElement("TR");
+	tr.id = "radek_" + i;
+	barva++;
+
+	if (barva == 1 && hlavicka.checked) {
+	tr.bgColor = "#afafaf";
+	}
+	else if (barva % 2 == 0)  {
+	tr.bgColor= "#efefef";
+	}
+	else
+	{
+	tr.bgColor = "#cfcfcf";
+	}
+
+	for (j = 0; j < b; j++)  {
+
+		var td = document.createElement("TD");
+		if(i==0 && j!==0 && hlavicka.checked)  {
+			td.setAttribute("name", "hlavicka");
+			td.setAttribute("class", "hlavicka");
+		}
+		else  {
+		td.setAttribute("class","data");
+		}
+
+		td.width=50;
+		td.height=25;
+		td.setAttribute("id",i + "_" + j + "_" + tab);
+		td.setAttribute("onclick","addtext(this.id)");
+
+		td.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+		td.setAttribute("onmouseout","this.bgColor = puvodni");
+
+		if(i == 0 && j == 0 && legenda.checked && hlavicka.checked)  {
+			td.bgColor = "#ffffff";
+			td.setAttribute("onmouseover", "puvodni = this.bgColor;");
+			td.setAttribute("onmouseout", "");
+		}
+		else if(legenda.checked && j == 0 && i !==0)  {
+			td.bgColor = "#afafaf";
+			td.setAttribute("name", "legenda");
+			td.setAttribute("class", "legenda");
+		}
+		else if(legenda.checked && hlavicka.checked == false && j == 0 && i ==0)  {
+			td.bgColor = "#afafaf";
+		}
+		tr.appendChild(td);
+
+	}
+	table.appendChild(tr);
+}
+
+table.border = 2;
+table.rules = "all";
+
+console.log("proměnná a po generaci: " + a);
+console.log("proměnná b po generaci: " + b);
+
+obrysy();
+}
+//---------------------------------------------------------------------------------------------------------
+//---------------------------------------------MAZÁNÍ------------------------------------------------------
+function smazat()  {
+
+if(tab == 1)  {
+	var tiskBut = document.getElementById("tisk");
+	tiskBut.style.visibility = "hidden";
+}
+
+var koko = document.getElementById(tab);
+if (koko.nodeName == "TABLE")  {
+koko.parentNode.removeChild(koko);
+
+var nast = document.getElementById("lopata");
+nast.style.visibility = "hidden";
+
+var maska = document.getElementById("test");
+maska.style.visibility = "hidden";
+tab--;
+
+koeficientPoctuRozdeleni = 1;
+koeficientPoctuRozdeleni2 = 1;
+}
+}
+
+
+//-------------------------------------------ZOBRAZENÍ A OBSLUHA OKNA NASTAVENÍ---------------------------
+function addtext(tst)  {
+
+var maska = document.getElementById("test");								//vezmi, zprůhledni a zobraz masku
+maska.style.opacity = 0.6;
+maska.style.visibility = "visible";
+
+var nast = document.getElementById("lopata");								//vem kono nastavení
+var idbun = document.getElementById(tst);									//vem cílovou buňku
+var check = document.getElementById("check");
+
+if(idbun.getAttribute("class") == "hlavicka" || idbun.getAttribute("class") == "legenda")  {
+	var headleg = document.getElementById("headLeg");
+	headleg.style.visibility = "visible";
+}
+
+check.checked = false;
+
+idbun.setAttribute("onmouseover","");
+idbun.setAttribute("onmouseout","");
+idbun.bgColor= "#ff4444";
+
+if (document.getElementById("text_" + tst))  {								//pokud existuje textNode,naplň jím hodnotu pole Text
+	var t = document.getElementById("text_" + tst);
+	var b = document.getElementById("text_bunky");
+	if(t.style.fontWeight == "bold")  {										// kontrola hodnoty a nastaveni checkboxu
+		check.checked = true;
+	}
+	else
+	{
+		check.checked = false;
+	}
+
+	b.value = t.innerHTML;
+}
+else
+{
+	var b = document.getElementById("text_bunky");							//pokud neexistuje textNode, vyprázdni pole text
+	b.value = "";
+}
+
+if(idbun.getAttribute("align")) {											//pokud existuje hodnota, nastav zarovnání dle buňky
+	var list = document.getElementById("listbox");
+	list.value = idbun.getAttribute("align");
+}
+else
+{
+	var list = document.getElementById("listbox");
+	list.value = "center";
+}
+
+nast.style.top = "";														//inicializace pozice okna nastavení
+
+nast.style.visibility = "visible";											//zobraz okno nastavení
+nast.style.left = Number(idbun.offsetLeft) + Number(idbun.width);			//nastav pozici okna nastavení
+nast.style.top = Number(idbun.offsetTop) + Number(idbun.height) + Number(nast.offsetTop);
+
+var idcil = document.getElementById("id_bunky")
+
+if(idbun.getAttribute("name"))  {
+	idcil.innerHTML = idbun.id + ", " + idbun.getAttribute("name");
+}
+else  {
+	idcil.innerHTML = idbun.id;
+}
+ajdy = idbun.id;
+b.focus();
+}
+//------------------------------------------------------------------------------------------------------
+//-----------------------------------TLACITKO SET------------------------------------------------------
+function tableSet(idBun)  {
+
+var bunText = document.getElementById("text_bunky").value;       		    //vezmi hodnotu pole text v nastavení
+var cilBun = document.getElementById(idBun);								//vezmi cílovou buňku
+var check = document.getElementById("check");
+
+if (document.getElementById("text_" + idBun)) {								// pokud již existuje textNode, přidej další text do této Node
+	var pp = document.getElementById("text_" + idBun);
+	pp.innerHTML = bunText;
+
+	if (check.checked) {													// kontrola hodnoty a nastaveni checkboxu
+		pp.style.fontWeight = "bold";
+	}
+	else
+	{
+		pp.style.fontWeight = "normal";
+	}
+}
+else
+{
+	var p = document.createElement("P");										//pokud neexistuje textNode, vytvoř novou
+	p.setAttribute("id","text_" + idBun);
+
+	if (check.checked) {														// kontrola hodnoty a nastaveni checkboxu
+		p.style.fontWeight = "bold";
+	}
+	else
+	{
+		p.style.fontWeight = "normal";
+	}
+
+	var t = document.createTextNode(bunText);
+	p.appendChild(t);
+	cilBun.appendChild(p);
+}
+
+var selectValue = document.getElementById("listbox").value;					//zjisti hodnotu zarování v nastavení
+cilBun.setAttribute("align", selectValue);                      			//přiřaď hodnotu cílové buňce
+cilBun.bgColor="";
+
+var nast = document.getElementById("lopata");								//vezmi okno nastavení a schovej ho
+nast.style.visibility = "hidden";
+
+var maska = document.getElementById("test");								//schovej masku
+maska.style.visibility = "hidden";
+
+var bunka = document.getElementById(ajdy);									//zpetne nastaveni eventu a barvy
+if(bunka.id == "0_0_"+tab)  {
+	bunka.setAttribute("onmouseover","puvodni = this.bgColor;");
+}
+else
+{
+	bunka.setAttribute("onmouseover","puvodni = this.bgColor; this.bgColor = \"#3399CC\"");
+	bunka.setAttribute("onmouseout","this.bgColor = puvodni");
+}
+bunka.bgColor = puvodni;
+
+var headleg = document.getElementById("headLeg");
+headleg.style.visibility = "hidden";
+}
+//-------------------------------------------------------------------------------------------------------
+//-------------------------------------TLACITKO ZPET-----------------------------------------------------
+function Zpet(ajdy) {
+
+var nast = document.getElementById("lopata");								//vezmi okno nastavení a schovej ho
+nast.style.visibility = "hidden";
+
+var bunka = document.getElementById(ajdy);									//zpetne nastaveni eventu a barvy
+bunka.setAttribute("onmouseover","puvodni = this.bgColor; this.bgColor = \"#3399CC\"");
+bunka.setAttribute("onmouseout","this.bgColor = puvodni");
+bunka.bgColor = puvodni;
+
+var maska = document.getElementById("test");								//schovej masku
+maska.style.visibility = "hidden";
+
+var headleg = document.getElementById("headLeg");
+headleg.style.visibility = "hidden";
+}
+//---------------------------------------------------------------------------------------------------------
+//------------------------------------------TISK-----------------------------------------------------------
+function tisk()  {
+if(confirm("Následná editace již nebude možná, přejete si pokračovat?"))  {
+var obsah = document.getElementById("telo");
+var bunky = document.getElementById(tab);
+for (i = 0; i < a; i++) {
+	for (j = 0; j < b; j++)  {
+	var kuadratek = document.getElementById(tab);
+	var bunka = tab.childNodes
+	kuadratek.setAttribute("onmouseover", "");
+	kuadratek.setAttribute("onmouseout", "");
+	}
+}
+document.writeln("<CENTER>" + obsah.innerHTML + "<BR><BR><BUTTON onClick='print()'>Tisk</BUTTON></CENTER>");
+}
+}
+//---------------------------------------------------------------------------------------------------------------
+//--------------------------------------ÚPRAVA STRUKTURY TABULKY-------------------------------------------------
+
+function rozdel(idecko)  {
+
+var bun = document.getElementById(idecko);                                           //vezmi cílovou buňku
+var otec = bun.parentNode.firstChild;												//první slupec tabulky
+var otec2 = bun.parentNode;															//slupec, v němž se buňka nachází
+var tabulka = document.getElementById(tab);											//příslušná tabulka
+
+if (bun.getAttribute("class") == "legenda")  {										// ROZDELENI BUNKY PRO LEGENDU
+
+	koeficientPoctuRozdeleni++;
+	if (koeficientPoctuRozdeleni > 2)  {												// druhe+ rozdeleni
+		bun.setAttribute("colspan","");
+		var tr = document.createElement("TR");
+		for(l = 0; l<(Number(b)+1); l++)  {
+			var td = document.createElement("TD");
+			if(l < 2) {
+				if (l == 0) {
+					td.setAttribute("rowspan","2");
+				}
+			td.setAttribute("name", "legenda");
+			td.setAttribute("class", "legenda");
+			td.bgColor = puvodni;
+			}
+			else  {
+			td.setAttribute("class","data");
+			}
+			td.width = 50;
+			td.height= 25;
+			td.setAttribute("onclick","addtext(this.id)");
+			td.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+			td.setAttribute("onmouseout","this.bgColor = puvodni");
+			td.setAttribute("id", i + "_" + j + "_" + tab + "_" + koeficientPoctuRozdeleni + l);
+			tr.appendChild(td);
+		}
+	tabulka.insertBefore(tr, otec2);
+	a += 1;
+}
+else																					// prvni rozdeleni
+{
+	for(i=0; i<a; i++) {
+		for (j=0; j<b; j++) {
+		if (j==0) {
+			var x = document.getElementById(i + "_" + j + "_" + tab);
+
+				var tr = document.createElement("TR");
+				for(k = 0; k<(Number(b)+1); k++)  {
+				var td = document.createElement("TD");
+					if (k < koeficientPoctuRozdeleni)  {
+						if (k == 0) {
+						td.setAttribute("rowspan","2");
+						}
+						td.bgColor = puvodni;
+						td.setAttribute("name", "legenda");
+						td.setAttribute("class", "legenda");
+					}
+					else  {
+						td.setAttribute("class","data");
+					}
+					td.height= 25;
+					td.width = 50;
+					tr.appendChild(td);
+
+					td.setAttribute("onclick","addtext(this.id)");
+					td.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+					td.setAttribute("onmouseout","this.bgColor = puvodni");
+					td.setAttribute("id", i + "_" + j + "_" + tab + "_" + k);
+				}
+			if (x.id !== idecko)  {
+				x.setAttribute("colspan", "2");
+			}
+		}
+		}
+	}
+	a += 1;
+	tabulka.insertBefore(tr, otec2);															//přiřazení nového sloupce tabulce
+
+}	 																						// konec podmínky na koeficient rozdělení
+}    																				// konec podmínky určující editaci LEGENDY
+else if (bun.getAttribute("class") == "hlavicka")  {
+
+if(koeficientPoctuRozdeleni2 < 2)  {												//první rozdělení HLAVICKY
+
+var tr = document.createElement("TR");
+var umisteni = Number(bun.id.charAt(2));
+for (i = 0; i < a; i++)  {
+
+	for (j=0; j < b; j++) {
+		if (i == 0) {
+			var x = document.getElementById(i + "_" + j + "_" + tab);
+			if (x.id !== idecko) {
+				x.setAttribute("rowspan", "2");
+			}
+			else
+			{
+			x.setAttribute("colspan","2");
+			x.style.borderBottom = "";
+			}
+
+			 if (j < 2)  {
+
+				var td = document.createElement("TD");
+				td.width = 50;
+				td.height= 25;
+				td.setAttribute("onclick","addtext(this.id)");
+				td.setAttribute("name","klik" + j);
+				td.setAttribute("class","hlavicka");
+				td.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+				td.setAttribute("onmouseout","this.bgColor = puvodni");
+				td.setAttribute("id", i + "_" + j + "_" + tab + "_" + koeficientPoctuRozdeleni2);
+				td.bgColor = "#afafaf";
+				tr.setAttribute("id", "radek_" + a);
+				tr.appendChild(td);
+
+			}
+		}
+	}
+	if (i > 0)  {
+
+		var td2 = document.createElement("TD");
+
+		td2.setAttribute("onclick","addtext(this.id)");
+		td2.setAttribute("class","data");
+		td2.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+		td2.setAttribute("onmouseout","this.bgColor = puvodni");
+		td2.setAttribute("id", i + "_" + j + "_" + tab + "_" + koeficientPoctuRozdeleni2);
+
+		var radek = document.getElementById("radek_" + i);
+		var pozice = radek.childNodes[umisteni];
+		radek.insertBefore(td2, pozice);
+	}
+}
+
+var druha = tabulka.childNodes[1];
+tabulka.insertBefore(tr, druha);													//vlozit radek hlavicky
+b += 1;
+koeficientPoctuRozdeleni2++;
+
+}
+else if(bun.getAttribute("name") == "klik0" || bun.getAttribute("name") == "klik1")		{									// ROZDELENI ROZDELENE BUNKY HLAVICKY
+	if (bun.getAttribute("name") == "klik0")  {
+		var tr = document.createElement("TR");
+		for (i = 0, len = bun.parentNode.nextSibling.childNodes.length; i < 2; i++)  {
+			var td = document.createElement("TD");
+			td.id = i + "_" + a + b;
+			td.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+			td.setAttribute("onmouseout","this.bgColor = puvodni");
+			td.setAttribute("onclick","addtext(this.id)");
+			td.height = "25";
+			td.width = "50";
+			td.bgColor = "#afafaf";
+			td.className = "hlavicka";
+			if (i == 0)  {
+			//	td.setAttribute("colspan", "2");
+			}
+			else if (i == 1)  {
+				td.setAttribute("rowspan", "2");
+			}
+			tr.appendChild(td);
+		}
+		tabulka.insertBefore(tr, bun.parentNode);
+
+		var bunkyy = document.getElementsByTagName("TD");
+		for (i=0, len = bunkyy.length; i < len; i++)  {
+			if (bunkyy[i].getAttribute("colspan") == "2" && bunkyy[i].parentNode.id !== "radek_1")  {
+				bunkyy[i].setAttribute("colspan", Number(bunkyy[i].getAttribute("colspan")) + 1);
+			}
+			if (bunkyy[i].className == "hlavicka" || bunkyy[i].id == "0_0_1")  {
+				var devide = bunkyy[i].getAttribute("rowspan");
+				devide++;
+				bunkyy[i].setAttribute("rowspan", devide);
+			}
+
+		}
+
+	}
+	else  {
+
+	}
+}
+else  {																				// druhé+ rozdeleni HLAVICKY
+
+
+
+
+
+bun.setAttribute("rowspan", "");
+bun.setAttribute("colspan", "2");
+bun.style.borderBottom = "";
+var td = document.createElement("TD");
+	td.bgColor = "#afafaf";
+	td.setAttribute("onclick","addtext(this.id)");
+	td.setAttribute("class","hlavicka");
+	td.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+	td.setAttribute("onmouseout","this.bgColor = puvodni");
+	td.setAttribute("id", i + "_" + j + "_" + tab + "_" + koeficientPoctuRozdeleni2);
+	td.setAttribute("name","klik0");
+
+otec2.nextSibling.appendChild(td);
+
+for (i = 0; i < (Number(a) + 1); i++)  {
+	if (i > 0)  {
+
+		var td2 = document.createElement("TD");
+
+		td2.setAttribute("onclick","addtext(this.id)");
+		td2.setAttribute("onmouseover","puvodni = this.bgColor;this.bgColor = \"#3399CC\"");
+		td2.setAttribute("onmouseout","this.bgColor = puvodni");
+		td2.setAttribute("id", i + "_" + j + "_" + tab + "_" + koeficientPoctuRozdeleni2);
+		td2.setAttribute("name","klik1");
+
+		if(i == 1)  {
+			td2.bgColor="#afafaf";
+			td2.setAttribute("class","hlavicka");
+		}
+		else  {
+			td2.setAttribute("class","data");
+		}
+		var radek = document.getElementById("radek_" + i);
+		var pozice = radek.childNodes[umisteni];
+		radek.insertBefore(td2, pozice);
+	}
+}
+
+b += 1;
+koeficientPoctuRozdeleni2++;
+}
+
+}
+
+
+var pocet = tabulka.childNodes.length;														//počet sloupců tabulky
+barva = 0;
+for (i = 0; i < pocet; i++)  {																//projdi sloupce a přiřaď hodnoty
+	tabulka.childNodes[i].setAttribute("id", "radek_" + i);
+	barva++;
+	if(barva == 1) {
+		tabulka.childNodes[i].setAttribute("bgColor", "#afafaf");
+	}
+	else if (barva % 2 == 0)  {
+		tabulka.childNodes[i].setAttribute("bgColor", "#efefef");
+	}
+	else  {
+		tabulka.childNodes[i].setAttribute("bgColor", "#cfcfcf");
+	}
+
+}
+
+
+obrysy();
+Zpet(idecko);
+}
+
+
+//---------------------------------------------------------OBRYSY------------------------------------------------
+function obrysy()    {
+var bunky = document.getElementsByTagName("TD");
+
+for(i = 0, len = bunky.length; i < len; i++)  {
+
+	if (bunky[i].className == "hlavicka")  {
+		if (!bunky[i].getAttribute("colspan"))  {
+		bunky[i].style.borderBottom = "2px solid #6f6f6f";
+		}
+	}
+	else if (bunky[i].className == "legenda")  {
+		if (!bunky[i].getAttribute("rowspan"))  {
+		bunky[i].style.borderRight = "2px solid #6f6f6f";
+		}
+	}
+}
+
+}
+//----------------------------------------------------------------------------------------------------------------
+
+
+</SCRIPT>
+
+
+
+</HEAD>
+<BODY>
+
+<CENTER>
+<DIV id='nadpis' style='background-color:#006699;'>
+<FONT size='5' color='ffffff'>Generátor tabulek</FONT>
+<HR>
+</DIV>
+<DIV id="hlava" style='background-color:#3399CC;'>
+<TABLE>
+	<TR>
+		<TD>
+			<FONT color='ffffff'><B>Řádky:</B></FONT><INPUT type='text' size='3' id='cols'>
+		</TD>
+		<TD>
+			<FONT color='ffffff'><B>Sloupce:</B></FONT><INPUT type='text' size='3' id='rows'>
+		</TD>
+	</TR>
+	<TR>
+		<TD colspan='2' align='center'>
+			<FONT color='ffffff'><B>Hlavicka</B></FONT>&nbsp &nbsp<INPUT type='checkbox' id='hlavicka'>
+		</TD>
+	</TR>
+	<TR>
+		<TD colspan='2' align='center'>
+			<FONT color='ffffff'><B>Legenda</B></FONT>&nbsp &nbsp<INPUT type='checkbox' id='legenda'>
+		</TD>
+	</TR>
+	<TR>
+		<TD colspan='2' align='center'>
+			<BUTTON onClick='generuj()'>Generovat</BUTTON>
+			<BUTTON onClick='smazat()'>Smazat</BUTTON>
+		</TD>
+	</TR>
+</TABLE>
+</DIV>
+<HR>
+<DIV id='telo'>
+
+<DIV id="test" class="maska">
+
+</DIV>
+
+<DIV id="lopata" class="nastaveni" style='background-color:#b0c4de; width: 350px; position: absolute; border: 2px solid #006699; z-index: 1;'>
+	<TABLE width='350'>
+		<TR>
+			<TD align='right' width='50%'>
+				<B>Buňka: </B>
+			</TD>
+			<TD id="id_bunky">
+
+			</TD>
+		</TR>
+		<TR>
+			<TD align='right'>
+				<B>Text: </B>
+			</TD>
+			<TD>
+				<INPUT type='text' id='text_bunky' size = '30'>
+			</TD>
+		</TR>
+		<TR>
+			<TD align='right'>
+				<B>Zarovnání textu: </B>
+			</TD>
+			<TD>
+				<SELECT id='listbox'>
+					<OPTION value = 'right'>Do prava</OPTION>
+					<OPTION value = 'left'>Do leva</OPTION>
+					<OPTION value = 'center'>Na střed</OPTION>
+				</SELECT>
+			</TD>
+		</TR>
+		<TR>
+			<TD align='right'>
+				<B>Tučně: </B>
+			</TD>
+			<TD>
+				<INPUT type='checkbox' id='check'>
+			</TD>
+		<TR>
+			<TD id='set_button' colspan='2' align='center'>
+				<BUTTON onClick="tableSet(ajdy)">Ok</BUTTON>
+				<BUTTON onClick="Zpet(ajdy)">Zpět</BUTTON>
+			</TD>
+		</TR>
+	</TABLE>
+	<HR>
+	<TABLE id="headLeg" style="visibility: hidden;">
+		<TR>
+			<TD align='center' nowrap>
+				<B>Upravit strukturu:</B>
+			</TD>
+			<TD>
+				<BUTTON id='rozdel' onClick='rozdel(ajdy)'>Rozdělit buňku</BUTTON>
+
+			</TD>
+		</TR>
+	</TABLE>
+</DIV>
+
+
+</DIV>
+<HR>
+<DIV id="pata" style='background-color:#3399CC; height: 60px;'>
+	<BR>
+	<BUTTON id="tisk" onClick="tisk()" style='visibility: hidden;'>Verze pro tisk</BUTTON>
+</DIV>
+<HR>
+</CENTER>
+
+
+<SCRIPT>
+//-------------------------INICIALIZACE OKNA NASTAVENÍ----------------------------------
+var nast = document.getElementById("lopata");
+nast.style.visibility = "hidden";
+//--------------------------------------------------------------------------------------
+</SCRIPT>
+
+</BODY>
+</HTML>
